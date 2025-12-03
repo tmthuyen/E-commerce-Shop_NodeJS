@@ -2,7 +2,7 @@ const User = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const fetch = require('node-fetch');
-
+const { sendWelcomeEmail } = require('../../utils/emailUtil');
 class AuthController {
   // [POST] /auth/login
   async login(req, res) {
@@ -28,35 +28,179 @@ class AuthController {
 
   async register(req, res) {
     try {
-      const { email, full_name, password, phone, address } = req.body;
-      // Kiểm tra email đã tồn tại chưa
-      const exist = await User.findOne({ email });
-      if (exist) return res.status(400).json({ message: "Email already exists" });
+      const { 
+        email, 
+        full_name, 
+        phone, 
+        address, 
+        ward, 
+        district, 
+        province 
+      } = req.body;
 
-      // Tạo user mới
-      const user = await User.create({
-        email,
-        full_name,
-        password,
-        phone,
-        addresses: address ? [{ name: address, is_default: true }] : [],
-        provider: "local"
+      // Validate required fields
+      if (!email || !full_name || !phone || !address || !ward || !district || !province) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng điền đầy đủ thông tin đăng ký'
+        });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Định dạng email không hợp lệ'
+        });
+      }
+
+      // Check if user already exists
+      const existingUser = await User.findOne({
+        $or: [
+          { email: email },
+          { phone: phone }
+        ]
       });
 
-      // Tạo token
+      if (existingUser) {
+        const field = existingUser.email === email ? 'Email' : 'Số điện thoại';
+        return res.status(400).json({
+          success: false,
+          message: `${field} đã được sử dụng`
+        });
+      }
+
+      // Generate random password (10 characters)
+      const generateRandomPassword = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%';
+        let password = '';
+        for (let i = 0; i < 10; i++) {
+          password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+      };
+
+      const randomPassword = generateRandomPassword();
+      console.log(`🔑 Generated password for ${email}:`, randomPassword);
+
+      // THÊM MỚI: Function để tạo user với retry mechanism
+      const createUserWithRetry = async (userData, maxRetries = 3) => {
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            return await User.create(userData);
+          } catch (error) {
+            if (error.code === 11000 && error.keyPattern._id && i < maxRetries - 1) {
+              console.log(`⚠️ Duplicate ID detected, retrying... (${i + 1}/${maxRetries})`);
+              
+              // Reset sequence và thử lại
+              const lastUser = await User.findOne({}, {}, { sort: { '_id': -1 } });
+              const nextId = lastUser ? lastUser._id + 1 : 1;
+              
+              await mongoose.connection.db.collection('counters').findOneAndUpdate(
+                { _id: 'user_seq' },
+                { $set: { seq: nextId - 1 } },
+                { upsert: true }
+              );
+              
+              continue; // Try again
+            }
+            throw error; // Re-throw if not ID duplicate or max retries reached
+          }
+        }
+      };
+
+      // Create user with retry
+      const newUser = await createUserWithRetry({
+        email,
+        full_name,
+        phone,
+        password: randomPassword,
+        provider: 'local',
+        role: 'customer',
+        status: 'active',
+        loyalty_points: 0,
+        addresses: [{
+          address,
+          ward,
+          district,
+          province,
+          is_default: true
+        }]
+      });
+
+      console.log('✅ User created successfully:', {
+        id: newUser._id,
+        email: newUser.email,
+        name: newUser.full_name
+      });
+
+      // Send welcome email with password
+      try {
+        console.log('📧 Sending welcome email...');
+        const emailResult = await sendWelcomeEmail(email, {
+          full_name,
+          email,
+          password: randomPassword,
+          login_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Welcome email sent successfully');
+        } else {
+          console.error('❌ Failed to send welcome email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('❌ Welcome email error:', emailError);
+        // Không throw error vì user đã được tạo thành công
+      }
+
+      // Generate JWT token for auto-login
       const token = jwt.sign(
-        { id: user._id, email: user.email, role: user.role },
+        { id: newUser._id, email: newUser.email, role: newUser.role },
         process.env.JWT_SECRET || "secret",
         { expiresIn: "7d" }
       );
 
-      const userObj = user.toObject();
+      // Return user data (hide password)
+      const userObj = newUser.toObject();
       delete userObj.password;
-      res.json({ user: userObj, token });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+
+      res.status(201).json({
+        success: true,
+        message: 'Đăng ký thành công! Vui lòng kiểm tra email để nhận mật khẩu.',
+        user: userObj,
+        token
+      });
+
+    } catch (error) {
+      console.error('❌ Register error:', error);
+      
+      // Handle duplicate key errors
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyPattern)[0];
+        const fieldName = field === 'email' ? 'Email' : 'Số điện thoại';
+        return res.status(400).json({
+          success: false,
+          message: `${fieldName} đã được sử dụng`
+        });
+      }
+
+      // Handle validation errors
+      if (error.name === 'ValidationError') {
+        const errorMessages = Object.values(error.errors).map(err => err.message);
+        return res.status(400).json({
+          success: false,
+          message: errorMessages[0] || 'Dữ liệu không hợp lệ'
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server, vui lòng thử lại sau'
+      });
     }
-}
+  }
   // [POST] /auth/social
   async socialLogin(req, res) {
     try {
@@ -168,6 +312,171 @@ class AuthController {
     } catch (err) {
       console.error("guestLogin error", err);
       res.status(500).json({ message: err.message });
+    }
+  }
+  
+
+
+
+    // [POST] /auth/forgot-password
+  async forgotPassword(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email là bắt buộc'
+        });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Định dạng email không hợp lệ'
+        });
+      }
+
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy tài khoản với email này'
+        });
+      }
+
+      // Check user status
+      if (user.status !== 'active') {
+        return res.status(400).json({
+          success: false,
+          message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.'
+        });
+      }
+
+      // Generate reset token (valid for 1 hour)
+      const resetToken = jwt.sign(
+        { userId: user._id, email: user.email, type: 'password-reset' },
+        process.env.JWT_SECRET || "secret",
+        { expiresIn: "1h" }
+      );
+
+      // Send password reset email
+      const { sendPasswordResetEmail } = require('../../utils/emailUtil');
+      const emailResult = await sendPasswordResetEmail(email, resetToken);
+
+      if (!emailResult.success) {
+        console.error('Failed to send reset email:', emailResult.error);
+        return res.status(500).json({
+          success: false,
+          message: 'Không thể gửi email khôi phục. Vui lòng thử lại sau.'
+        });
+      }
+
+      console.log(`✅ Password reset email sent to: ${email}`);
+
+      res.json({
+        success: true,
+        message: 'Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.'
+      });
+
+    } catch (error) {
+      console.error('❌ Forgot password error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server, vui lòng thử lại sau'
+      });
+    }
+  }
+
+  // [POST] /auth/reset-password
+  async resetPassword(req, res) {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: 'Token là bắt buộc'
+        });
+      }
+
+      // Verify token
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Token không hợp lệ hoặc đã hết hạn'
+        });
+      }
+
+      // Check token type
+      if (decoded.type !== 'password-reset') {
+        return res.status(400).json({
+          success: false,
+          message: 'Token không hợp lệ'
+        });
+      }
+
+      // Find user
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy tài khoản'
+        });
+      }
+
+      // Generate new random password
+      const generateRandomPassword = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%';
+        let password = '';
+        for (let i = 0; i < 10; i++) {
+          password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+      };
+
+      const newPassword = generateRandomPassword();
+      console.log(`🔑 Generated new password for ${user.email}:`, newPassword);
+
+      // Update user password
+      user.password = newPassword;
+      await user.save();
+
+      // Send new password email
+      const { sendNewPasswordEmail } = require('../../utils/emailUtil');
+      const emailResult = await sendNewPasswordEmail(user.email, {
+        full_name: user.full_name,
+        email: user.email,
+        password: newPassword
+      });
+
+      if (!emailResult.success) {
+        console.error('Failed to send new password email:', emailResult.error);
+        return res.status(500).json({
+          success: false,
+          message: 'Đã tạo mật khẩu mới nhưng không thể gửi email. Vui lòng liên hệ hỗ trợ.'
+        });
+      }
+
+      console.log(`✅ New password sent to: ${user.email}`);
+
+      res.json({
+        success: true,
+        message: 'Mật khẩu mới đã được gửi về email của bạn.'
+      });
+
+    } catch (error) {
+      console.error('❌ Reset password error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server, vui lòng thử lại sau'
+      });
     }
   }
 }

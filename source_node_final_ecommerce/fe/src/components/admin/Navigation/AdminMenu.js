@@ -70,6 +70,7 @@ const items = [
       //   key: '4-4',
       //   label: <Link to="/admin/products/:slug">Chi tiết sản phẩm</Link>,
       // },
+    
     ],
   },
   {
@@ -97,11 +98,18 @@ const items = [
   //   icon: <NotificationOutlined />,
   //   label: <Link to="/admin/notifications">Thông báo</Link>,
   // },
-  {
-    key: '10',
-    icon: <SettingOutlined />,
-    label: <Link to="/admin/settings">Cài đặt</Link>,
-  },
+  // {
+  //   key: '10',
+  //   icon: <SettingOutlined />,
+  //   label: <Link to="/admin/settings">Cài đặt</Link>,
+  
+  // }
+
+  // {
+  //   key: '11',
+  //   icon: <LogoutOutlined />,
+  //   label: <Link to="/logout">Đăng xuất</Link>,
+  // },
 ];
 
 // const flattenItemsToMap = (list, map = new Map()) => {

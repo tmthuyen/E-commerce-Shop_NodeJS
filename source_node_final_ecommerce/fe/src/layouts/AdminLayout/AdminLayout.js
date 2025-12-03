@@ -55,7 +55,7 @@ export default function AdminLayout({ user }) {
       ['/admin/promotions', 'Khuyến mãi'],
       ['/admin/reports', 'Báo cáo'],
       ['/admin/notifications', 'Thông báo'],
-      ['/admin/settings', 'Cài đặt'],
+      // ['/admin/settings', 'Cài đặt'],
     ]);
     for (const [p, t] of map.entries()) {
       if (location.pathname === p || location.pathname.startsWith(p + '/'))
@@ -285,9 +285,9 @@ export default function AdminLayout({ user }) {
               }}
             >
               {/* Ẩn bớt icon trên màn nhỏ nếu cần */}
-              <div className="header-icon">
+              {/* <div className="header-icon">
                 <LightMode />
-              </div>
+              </div> */}
               <div ref={notiMenuRef} className="relative">
                 <div className='relative cursor-pointer header-icon '>
                   <Badge badgeContent={unReadCount} color="error" onClick={() => setIsOpenNotifyMenu(!isOpenNotifyMenu)}>
@@ -299,6 +299,12 @@ export default function AdminLayout({ user }) {
                   </div>
                 </div>
               </div>
+              {/* <div className="header-icon"><LightMode /></div>
+              <div className="header-icon">
+                <Badge badgeContent={4} color="error">
+                  <NotificationsNone />
+                </Badge>
+              </div> */}
               <Dropdown placement="bottomRight" menu={{ items: userMenuItems }}>
                 <Link
                   to="/admin/profile"

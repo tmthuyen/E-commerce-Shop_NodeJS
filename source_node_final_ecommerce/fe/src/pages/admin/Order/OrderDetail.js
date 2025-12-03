@@ -49,12 +49,15 @@ import {
   Note,
   Edit,
   Person,
-  ShoppingBag
+  ShoppingBag,
+  Speed,
+  AccessTime,
+  FlightTakeoff
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_DOMAIN } from '../../../constants/apiDomain';
-
-// Status mapping (same as previous)
+import { useNotification } from '../../../hooks/useNotification';
+// Status mapping
 const ORDER_STATUS = {
   'PENDING': { 
     label: 'Chờ xử lý', 
@@ -100,6 +103,34 @@ const ORDER_STATUS = {
   }
 };
 
+// THÊM MỚI: Shipping method configuration
+const SHIPPING_METHOD_CONFIG = {
+  'ECONOMY': { 
+    label: 'Giao hàng tiết kiệm', 
+    color: 'info', 
+    icon: <AccessTime />,
+    timelineColor: 'info'
+  },
+  'STANDARD': { 
+    label: 'Giao hàng tiêu chuẩn', 
+    color: 'primary', 
+    icon: <LocalShipping />,
+    timelineColor: 'primary'
+  },
+  'FAST': { 
+    label: 'Giao hàng nhanh', 
+    color: 'warning', 
+    icon: <Speed />,
+    timelineColor: 'warning'
+  },
+  'EXPRESS': { 
+    label: 'Giao hàng hỏa tốc', 
+    color: 'error', 
+    icon: <FlightTakeoff />,
+    timelineColor: 'error'
+  }
+};
+
 const PAYMENT_METHOD = {
   'COD': 'Thanh toán khi nhận hàng',
   'VNPAY': 'VNPay',
@@ -118,6 +149,8 @@ function AdminOrderDetail() {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
+
+  const { showSuccess, showError, NotificationComponent } = useNotification();
 
   const token = localStorage.getItem("token");
 
@@ -165,10 +198,10 @@ function AdminOrderDetail() {
       // Refresh order data
       fetchOrderDetail();
       
-      alert('Cập nhật trạng thái thành công!');
+      showSuccess('Cập nhật trạng thái đơn hàng thành công');
     } catch (error) {
       console.error('Error updating status:', error);
-      alert(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái');
+      showError('Cập nhật trạng thái đơn hàng thất bại');
     }
   };
 
@@ -464,6 +497,80 @@ function AdminOrderDetail() {
             </CardContent>
           </Card>
 
+          {/* THÊM MỚI: Thông tin vận chuyển */}
+          {order.shipping_method_details && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                  <LocalShipping sx={{ mr: 1 }} />
+                  Vận chuyển
+                </Typography>
+                
+                <Grid container spacing={1}>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      {SHIPPING_METHOD_CONFIG[order.shipping_method]?.icon}
+                      <Box sx={{ ml: 1 }}>
+                        <Typography variant="body1" fontWeight={600}>
+                          {order.shipping_method_details.name}
+                        </Typography>
+                        <Chip 
+                          label={SHIPPING_METHOD_CONFIG[order.shipping_method]?.label}
+                          color={SHIPPING_METHOD_CONFIG[order.shipping_method]?.color}
+                          size="small"
+                          sx={{ mt: 0.5 }}
+                        />
+                      </Box>
+                    </Box>
+                  </Grid>
+                  
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Thời gian dự kiến:</Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {order.shipping_method_details.estimated_days}
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Phí vận chuyển:</Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {order.shipping_method_details.fee === 0 ? (
+                        <Chip label="Miễn phí" color="success" size="small" />
+                      ) : (
+                        formatPrice(order.shipping_method_details.fee)
+                      )}
+                    </Typography>
+                  </Grid>
+                  
+                  {order.shipping_method_details.description && (
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', display: 'block', mt: 1 }}>
+                        {order.shipping_method_details.description}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+
+                {/* Special notices based on shipping method */}
+                {order.shipping_method === 'EXPRESS' && (
+                  <Alert severity="warning" sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      ⚡ Giao hàng hỏa tốc - Áp dụng trong nội thành
+                    </Typography>
+                  </Alert>
+                )}
+                
+                {order.shipping_method_details.fee === 0 && (
+                  <Alert severity="success" sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      🎉 Miễn phí vận chuyển
+                    </Typography>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Shipping Address */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
@@ -500,18 +607,51 @@ function AdminOrderDetail() {
                 Thanh toán
               </Typography>
               
-              <Typography variant="body1">
+              <Typography variant="body1" fontWeight={600}>
                 {PAYMENT_METHOD[order.payment_method] || order.payment_method}
               </Typography>
               
               {order.customer_note && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Ghi chú:
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                    <Note sx={{ mr: 1, fontSize: 16 }} />
+                    Ghi chú từ khách hàng:
                   </Typography>
-                  <Typography variant="body2">
-                    {order.customer_note}
+                  <Typography variant="body2" sx={{ 
+                    p: 1, 
+                    bgcolor: 'grey.50', 
+                    borderRadius: 1,
+                    fontStyle: 'italic'
+                  }}>
+                    "{order.customer_note}"
                   </Typography>
+                </Box>
+              )}
+
+              {/* Loyalty points info */}
+              {order.loyalty_points_used > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Điểm tích lũy đã sử dụng:
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} color="primary">
+                    {order.loyalty_points_used.toLocaleString()} điểm
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Promotion info */}
+              {order.promotion_used && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Mã giảm giá đã áp dụng:
+                  </Typography>
+                  <Chip 
+                    label={order.promotion_used.code}
+                    color="success"
+                    size="small"
+                    sx={{ mt: 0.5 }}
+                  />
                 </Box>
               )}
             </CardContent>
@@ -521,11 +661,22 @@ function AdminOrderDetail() {
 
       {/* Status Update Dialog */}
       <Dialog open={statusDialogOpen} onClose={() => setStatusDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Cập nhật trạng thái đơn hàng</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Edit sx={{ mr: 1 }} />
+            Cập nhật trạng thái đơn hàng
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" color="text.secondary">
               Đơn hàng: <strong>#{order.order_number}</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Khách hàng: <strong>{order.customer_id.full_name}</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Trạng thái hiện tại: <strong>{ORDER_STATUS[order.status]?.label || order.status}</strong>
             </Typography>
           </Box>
           
@@ -552,7 +703,7 @@ function AdminOrderDetail() {
             multiline
             rows={3}
             label="Ghi chú"
-            placeholder="Nhập ghi chú về việc cập nhật trạng thái..."
+            placeholder="Nhập ghi chú về việc cập nhật trạng thái (tùy chọn)..."
             value={statusNote}
             onChange={(e) => setStatusNote(e.target.value)}
             margin="normal"
@@ -560,11 +711,17 @@ function AdminOrderDetail() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setStatusDialogOpen(false)}>Hủy</Button>
-          <Button variant="contained" onClick={handleStatusUpdate} disabled={!newStatus}>
-            Cập nhật
+          <Button 
+            variant="contained" 
+            onClick={handleStatusUpdate} 
+            disabled={!newStatus}
+            startIcon={<Assignment />}
+          >
+            Cập nhật trạng thái
           </Button>
         </DialogActions>
       </Dialog>
+      <NotificationComponent />
     </Box>
   );
 }
