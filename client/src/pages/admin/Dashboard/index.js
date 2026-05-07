@@ -2,22 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
-  Grid,
   Card,
-  CardContent,
   Typography,
-  Button,
   Tabs,
   Tab,
   Alert,
   CircularProgress,
   Fade
 } from '@mui/material';
-import {
+import { 
   Dashboard as DashboardIcon,
   Analytics,
   TrendingUp,
-  BarChart
 } from '@mui/icons-material';
 import { getSimpleDashboard, getAdvancedDashboard } from '../../../redux/reducers/dashboardSlice';
 import SimpleDashboard from './SimpleDashboard';

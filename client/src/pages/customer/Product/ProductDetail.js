@@ -1,5 +1,5 @@
 // src/pages/customer/ProductDetail.jsx
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -19,7 +19,6 @@ import {
   TableBody,
 } from '@mui/material';
 import { AddShoppingCart, ShoppingCartCheckout } from '@mui/icons-material';
-import { api } from '../../../api/axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProductBySlug } from '../../../redux/reducers/productSlice';
 import { message } from 'antd';
