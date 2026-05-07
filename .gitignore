@@ -9,10 +9,15 @@ dist
 .idea
 .vscode
 
-/gateway/node_modules
-/services/**/node_modules
-/fe/node_modules
-/BE/node_modules/
 
 # file này chứa biến môi trường, thông tin nhạy cảm
 .env
+
+backup_db/**
+backup_db2/**
+!backup_db/.gitkeep
+
+server/node_modules
+server/dist
+client/node_modules
+client/dist

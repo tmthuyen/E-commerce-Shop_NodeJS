@@ -6,27 +6,28 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ports:
-      - "9200:9200"
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+  #   container_name: elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - ES_JAVA_OPTS=-Xms512m -Xmx512m
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
     
+  # thư mục gốc chưa server, client, docker (docker-compose.yml, Dockerfile.client, Dockerfile.server)
   backend: 
     build:
-      context: ./BE
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile.server
       target: dev  
     ports:
-      - "8000:${BACKEND_PORT}"
+      - "8088:${BACKEND_PORT}"
     volumes:
-      - ./BE:/app 
+      - ../server:/app 
       - /app/node_modules   
     environment: 
       - NODE_ENV=development 
@@ -42,18 +43,18 @@ services:
       - DB_NAME=e_commerce_final_dev
       - MONGO_URI=mongodb://${MONGO_HOST}:${MONGO_PORT}/e_commerce_final_dev 
       - ELASTIC_URL=http://elasticsearch:9200
-    depends_on: [mongo, elasticsearch]
+    depends_on: [mongo]
 
 
   frontend:
     build: 
-      context: ./fe
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile.client
       target: dev 
     ports:
-      - "3000:${FRONTEND_PORT}"
+      - "4000:${FRONTEND_PORT}"
     volumes:
-      - ./fe:/app 
+      - ../client:/app 
       - /app/node_modules 
     environment:
       - NODE_ENV=development 
@@ -66,5 +67,5 @@ services:
 
 volumes:
   mongo_data:
-  esdata:
+  # esdata:
   
