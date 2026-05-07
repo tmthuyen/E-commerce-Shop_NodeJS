@@ -1,5 +1,5 @@
 const path = require('path');
-const morgan = require('morgan');
+// const morgan = require('morgan');
 const express = require('express');
 const methodOverride = require('method-override');
 const cookieParser = require('cookie-parser');
@@ -32,7 +32,7 @@ app.use(
 );
 
 // HTTP Logger
-app.use(morgan('combined'));
+// app.use(morgan('combined'));
 // static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -54,8 +54,18 @@ app.get('/api/health', (req, res) => {
 route(app);
 
 // elastic search init
-// const initProductIndex = require('./lib/initProductIndex');
-// initProductIndex().catch(console.error);
+const initProductIndex = require('./lib/initProductIndex');
+initProductIndex()
+  .then(() => {
+    console.log('✅ Elasticsearch index initialized');
+    // Optional: Re-index all products on startup (uncomment if needed)
+    // const productSearchService = require('./services/productSearchService');
+    // productSearchService.reindexAllProducts().catch(console.error);
+  })
+  .catch((error) => {
+    console.error('⚠️ Elasticsearch initialization failed:', error.message);
+    console.log('⚠️ Continuing without Elasticsearch...');
+  });
 
 
 // tắt listen, file server.js sẽ lo 

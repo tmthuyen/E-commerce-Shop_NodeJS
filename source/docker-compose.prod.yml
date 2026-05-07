@@ -8,10 +8,10 @@ services:
       dockerfile: Dockerfile
       target: prod
     ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
+      - "8088:8088"
     environment: 
       - NODE_ENV=production
-      - PORT=${BACKEND_PORT}
+      - PORT=8088
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
@@ -37,7 +37,7 @@ services:
       target: prod
     restart: unless-stopped
     ports:
-      - "3000:80"  
+      - "4000:80"  
     environment:
       - NODE_ENV=production
       - FRONTEND_PORT=${FRONTEND_PORT}

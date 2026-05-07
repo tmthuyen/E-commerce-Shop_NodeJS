@@ -12,6 +12,7 @@ const router = express.Router();
 // Product router
 
 router.get('/search', ProductController.search);
+router.get('/autocomplete', ProductController.autocomplete);
 router.get('/:slug', ProductController.show);
 router.get('/:id/detail', adminRequired, ProductController.detail);
 router.get('/', ProductController.index);

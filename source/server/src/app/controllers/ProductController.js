@@ -142,35 +142,82 @@ class ProductController {
     }
   }
 
-  // [GET] | /products/search elastic
+  // [GET] | /api/products/search - Elasticsearch search
   async search(req, res) {
-    const q = req.query.q || '';
-    const page = parseInt(req.query.page || '1', 10);
-    const size = parseInt(req.query.size || '12', 10);
-    const from = (page - 1) * size;
-
     try {
-      // const result = await es.search({
-      //   index: 'products',
-      //   from,
-      //   size,
-      //   query: q
-      //     ? {
-      //         multi_match: {
-      //           query: q,
-      //           fields: ['name^3', 'description', 'category'],
-      //           fuzziness: 'AUTO',
-      //         },
-      //       }
-      //     : { match_all: {} },
-      // });
-      // res.json({
-      //   total: result.hits.total.value,
-      //   items: result.hits.hits.map((h) => h._source),
-      // });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Search error' });
+      const productSearchService = require('../../services/productSearchService');
+      const {
+        q: query = '',
+        page = 1,
+        limit = 12,
+        category_id,
+        brand_id,
+        min_price,
+        max_price,
+        min_rating,
+        sort = 'relevance',
+      } = req.query;
+
+      const result = await productSearchService.searchProducts(query, {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        category_id,
+        brand_id,
+        min_price: min_price ? parseFloat(min_price) : undefined,
+        max_price: max_price ? parseFloat(max_price) : undefined,
+        min_rating: min_rating ? parseFloat(min_rating) : undefined,
+        sort,
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: result.products,
+        meta: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi tìm kiếm: ' + error.message,
+        data: null,
+      });
+    }
+  }
+
+  // [GET] | /api/products/autocomplete - Autocomplete suggestions
+  async autocomplete(req, res) {
+    try {
+      const productSearchService = require('../../services/productSearchService');
+      const { q: query = '', limit = 10 } = req.query;
+
+      if (!query || !query.trim()) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+        });
+      }
+
+      const suggestions = await productSearchService.autocomplete(
+        query,
+        parseInt(limit, 10)
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: suggestions,
+      });
+    } catch (error) {
+      console.error('Autocomplete error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi autocomplete: ' + error.message,
+        data: null,
+      });
     }
   }
 
@@ -378,6 +425,15 @@ class ProductController {
       await newProduct.save();
       console.log('✅ New product created:', newProduct._id);
 
+      // Index to Elasticsearch
+      try {
+        const productSearchService = require('../../services/productSearchService');
+        await productSearchService.indexProduct(newProduct);
+      } catch (esError) {
+        console.error('⚠️ Failed to index product to Elasticsearch:', esError.message);
+        // Không throw error để không ảnh hưởng đến flow chính
+      }
+
       // ===================== LƯU VARIANTS =====================
       if (parseVariants.length > 0) {
         const ProductVariantModel = require('../models/ProductVariant');
@@ -499,6 +555,15 @@ class ProductController {
           data: null,
         });
       }
+
+      // Update Elasticsearch index
+      try {
+        const productSearchService = require('../../services/productSearchService');
+        await productSearchService.updateProduct(updatedProduct);
+      } catch (esError) {
+        console.error('⚠️ Failed to update product in Elasticsearch:', esError.message);
+      }
+
       res.status(200).json({
         success: true,
         message: 'Cập nhật trạng thái sản phẩm thành công',
@@ -605,6 +670,14 @@ class ProductController {
         { new: true }
       );
 
+      // Update Elasticsearch index
+      try {
+        const productSearchService = require('../../services/productSearchService');
+        await productSearchService.updateProduct(updatedProduct);
+      } catch (esError) {
+        console.error('⚠️ Failed to update product in Elasticsearch:', esError.message);
+      }
+
       res.status(200).json({
         success: true,
         message: `Cập nhật sản phẩm thành công`,
@@ -638,10 +711,15 @@ class ProductController {
         });
       }
       console.log('Soft delete result:', c);
-      // await ProductModel.updateOne(
-      //   { _id: parseInt(id, 10) },
-      //   { status: PRODUCT_STATUSES.INACTIVE }
-      // );
+      
+      // Remove from Elasticsearch
+      try {
+        const productSearchService = require('../../services/productSearchService');
+        await productSearchService.removeProduct(parseInt(id, 10));
+      } catch (esError) {
+        console.error('⚠️ Failed to remove product from Elasticsearch:', esError.message);
+      }
+
       return res.status(200).json({
         success: true,
         message: `Xóa sản phẩm thành công. ID = ${id}`,
@@ -669,6 +747,18 @@ class ProductController {
           data: null,
         });
       }
+
+      // Re-index to Elasticsearch
+      try {
+        const restoredProduct = await ProductModel.findById(req.params.id);
+        if (restoredProduct) {
+          const productSearchService = require('../../services/productSearchService');
+          await productSearchService.indexProduct(restoredProduct);
+        }
+      } catch (esError) {
+        console.error('⚠️ Failed to re-index product to Elasticsearch:', esError.message);
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Khôi phục sản phẩm thành công',
@@ -691,6 +781,7 @@ class ProductController {
       const { id } = req.params;
       // Tìm kiếm sản phẩm có trong đơn hàng nào không?
       const isInOrders = false; // TODO: check trong OrderModel
+      // const exitsOrder = await OrderModel 
       if (isInOrders) {
         return res.status(400).json({
           success: false,

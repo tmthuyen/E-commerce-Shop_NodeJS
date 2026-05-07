@@ -13,6 +13,7 @@ const promotionRoute = require('./promotionRoute');
 const commentRoute = require('./commentRoute');
 const ratingRoute = require('./ratingRoute');
 const notifyRoute = require('./notificationRoute.js');
+const aiRoute = require('./aiRoute');
 const homeRoute = require('./homeRoute');
 const adminHomeRoute = require('./adminHomeRoute.js');
 
@@ -39,6 +40,7 @@ function route(app) {
     app.use('/api/promotions', promotionRoute);
     // app.use('/api/wishlist', authLimiter, wishlistRoute);
     app.use('/api/notifications', notifyRoute);
+    app.use('/api/ai', aiRoute);
     app.use('/api/ratings', ratingRoute); 
     app.use('/api/comments', commentRoute);
 
