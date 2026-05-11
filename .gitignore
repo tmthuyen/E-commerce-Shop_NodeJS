@@ -1,0 +1,23 @@
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist
+.DS_Store
+.idea
+.vscode
+
+
+# file này chứa biến môi trường, thông tin nhạy cảm
+.env
+
+backup_db/**
+backup_db2/**
+!backup_db/.gitkeep
+
+server/node_modules
+server/dist
+client/node_modules
+client/dist

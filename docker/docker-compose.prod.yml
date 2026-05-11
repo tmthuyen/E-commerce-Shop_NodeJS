@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  backend_prod: 
+    image: ${BE_IMAGE}
+    build:
+      context: ./BE
+      dockerfile: Dockerfile
+      target: prod
+    ports:
+      - "8088:8088"
+    environment: 
+      - NODE_ENV=production
+      - PORT=8088
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - MONGO_URI=mongodb+srv://phannguyenquocthang:123@cluster0.nggdgrm.mongodb.net/e_commerce_final_dev
+      - CLIENT_URL=${FRONTEND_URL}
+      # VNPay configs
+      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
+      - VNPAY_RETURN_URL=${VNPAY_RETURN_URL}
+      - VNPAY_API_URL=${VNPAY_API_URL}
+      - VNPAY_API_QUERY_URL=${VNPAY_API_QUERY_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+    restart: unless-stopped
+
+  frontend_prod:
+    image: ${FE_IMAGE}
+    build: 
+      context: ./fe
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    ports:
+      - "4000:80"  
+    environment:
+      - NODE_ENV=production
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - REACT_APP_BACKEND_URL=${API_URL}
+    depends_on:
+      - backend_prod
+ 
+volumes:
+  mongo_data:
