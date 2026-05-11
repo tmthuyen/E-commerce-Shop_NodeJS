@@ -38,8 +38,8 @@ services:
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
-      - DB_HOST=${MONGO_HOST}
-      - DB_PORT=${MONGO_PORT}
+      - DB_HOST=${MONGO_HOST:mongo}
+      - DB_PORT=${MONGO_PORT:27017}
       - DB_NAME=e_commerce_final_dev
       - MONGO_URI=mongodb://${MONGO_HOST}:${MONGO_PORT}/e_commerce_final_dev 
       - ELASTIC_URL=http://elasticsearch:9200
