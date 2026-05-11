@@ -374,7 +374,7 @@ function ProductDetail() {
               >
                 Thêm vào giỏ
               </Button>
-              <Button
+              {/* <Button
                 onClick={handleBuyNow}
                 variant="outlined"
                 startIcon={<ShoppingCartCheckout />}
@@ -385,7 +385,7 @@ function ProductDetail() {
                 }
               >
                 Mua ngay
-              </Button>
+              </Button> */}
             </div>
           </Stack>
         </Grid>
