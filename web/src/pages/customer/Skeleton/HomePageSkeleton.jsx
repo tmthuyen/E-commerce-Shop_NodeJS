@@ -55,14 +55,14 @@ const HomePageSkeleton = (title) => {
           sx={{ borderRadius: 2, mb: 2 }}
         />
 
-        {renderSkeletons((title = 'New Products'))}
+        {renderSkeletons()}
 
-        {renderSkeletons((title = 'Best Sellers'))}
+        {renderSkeletons()}
 
-        {renderSkeletons((title = 'Điện thoại'))}
+        {renderSkeletons()}
 
-        {renderSkeletons((title = 'Desktop'))}
-        {renderSkeletons((title = 'Laptop'))}
+        {renderSkeletons()}
+        {renderSkeletons()}
       </Grid>
     </>
   );

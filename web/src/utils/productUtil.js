@@ -50,7 +50,7 @@ const findVariantByAttributes = (variants, code, value) => {
   let foundVariant = null;
   // let foundIdx = -1;
 
-  variants.forEach((item, idx) => {
+  variants.forEach((item) => {
     const attrs = item.attributes || {};
     const entries = Object.values(attrs);
 

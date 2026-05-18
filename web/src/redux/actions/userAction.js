@@ -13,6 +13,7 @@ export const fetchProfile = () => async (dispatch) => {
     dispatch(login({ user: res.data, token }));
   } catch (err) {
     // handle error
+    console.error("Error fetching profile:", err);
   }
 };
 
@@ -26,6 +27,7 @@ export const updateProfile = (data) => async (dispatch) => {
     dispatch(login({ user: res.data, token }));
   } catch (err) {
     // handle error
+    console.error("Error updating profile:", err);
   }
 };
 
@@ -33,12 +35,15 @@ export const updateProfile = (data) => async (dispatch) => {
 export const changePassword = (data) => async (dispatch) => {
   try {
     const token = localStorage.getItem("token");
+    console.log(dispatch);
+    
     await axios.patch(`${API_DOMAIN}/api/users/me/change-password`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     // Có thể thông báo thành công
   } catch (err) {
     // handle error
+    console.error("Error changing password:", err);
   }
 };
 

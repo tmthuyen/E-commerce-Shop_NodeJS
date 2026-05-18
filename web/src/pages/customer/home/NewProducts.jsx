@@ -1,5 +1,5 @@
 import GridProductsHomePage from './GridProductsHomePage';
-import ProductsSkeleton from './ProductsSketon'; 
+import ProductsSkeleton from './ProductsSkeleton'; 
 
 export default function NewProducts({ data }) { 
   if (!data) return <ProductsSkeleton count={8} />;

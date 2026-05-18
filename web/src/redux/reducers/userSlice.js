@@ -133,7 +133,7 @@ const userSlice = createSlice({
       })
       
       // Đổi mật khẩu
-      .addCase(changeMyPassword.fulfilled, (state, action) => {
+      .addCase(changeMyPassword.fulfilled, (state) => {
         state.success = 'Đổi mật khẩu thành công';
       })
       

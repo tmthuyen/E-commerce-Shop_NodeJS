@@ -1,6 +1,6 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 
-import Home from '../pages/customer/Home';
+import Home from '../pages/customer/home';
 import Cart from '../pages/customer/Cart';
 import Profile from '../pages/customer/Profile';
 import Order from '../pages/customer/Order';

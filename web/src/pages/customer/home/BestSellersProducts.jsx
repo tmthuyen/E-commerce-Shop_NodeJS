@@ -1,6 +1,5 @@
-import GridProductsBestSellers from "./GridProductsBestSellers";
-import GridProductsHomePage from "./GridProductsHomePage";
-import ProductsSkeleton from "./ProductsSketon";
+import GridProductsBestSellers from "./GridProductsBestSellers"; 
+import ProductsSkeleton from "./ProductsSkeleton";
 
 export default function BestSellersProducts({ data }) {
   
