@@ -23,6 +23,11 @@ const { globalLimiter, authLimiter } = require('../security/rateLimit');
 const { adminRequired, authRequired, tryAuth } = require('../app/middlewares/AuthMiddleware');
 
 function route(app) {
+    // check status
+    app.get('/api/health', (req, res) => {
+        res.status(200).json({ message: 'API is working' });
+    });
+
     app.use(globalLimiter);
      // ✅ Gắn trước mọi route để luôn có req.user (guest/user/admin)
     app.use(tryAuth);

@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 8000;
 const server = http.createServer(app);
 
 // khoi tao Socket.IO
-const allowOrigins = ['http://localhost:3000'];
+const allowOrigins = ['http://localhost:3000', 'http://localhost:4000', 'http://localhost:5173'];
 
 const io = new Server(server, {
   cors: {

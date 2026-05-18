@@ -1,8 +1,9 @@
 services:
   mongo:
-    image: mongo:6 
+    image: mongo:8.0
+    container_name: ecm-nodejs-mongo
     ports:
-      - "27017:27017"
+      - "27018:${DB_PORT}"
     volumes:
       - mongo_data:/data/db
 
@@ -19,13 +20,15 @@ services:
   #     - esdata:/usr/share/elasticsearch/data
     
   # thư mục gốc chưa server, client, docker (docker-compose.yml, Dockerfile.client, Dockerfile.server)
-  backend: 
+  server: 
     build:
       context: ..
       dockerfile: docker/Dockerfile.server
       target: dev  
+    image: ecm-nodejs-server:dev
+    container_name: ecm-nodejs-server
     ports:
-      - "8088:${BACKEND_PORT}"
+      - "8080:${BACKEND_PORT}"
     volumes:
       - ../server:/app 
       - /app/node_modules   
@@ -38,19 +41,25 @@ services:
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
-      - DB_HOST=${MONGO_HOST:mongo}
-      - DB_PORT=${MONGO_PORT:27017}
-      - DB_NAME=e_commerce_final_dev
-      - MONGO_URI=mongodb://${MONGO_HOST}:${MONGO_PORT}/e_commerce_final_dev 
+      # - DB_USER=${DB_USER:-root}
+      # - DB_HOST=${DB_HOST:-mongo}
+      # - DB_PORT=${DB_PORT:-27017}
+      # - DB_NAME=e_commerce_final_dev
+      - MONGO_URI=${MONGO_URI}
       - ELASTIC_URL=http://elasticsearch:9200
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on: [mongo]
 
 
-  frontend:
+  client:
     build: 
       context: ..
       dockerfile: docker/Dockerfile.client
       target: dev 
+    image: ecm-nodejs-client:dev
+    container_name: ecm-nodejs-client
     ports:
       - "4000:${FRONTEND_PORT}"
     volumes:
@@ -61,9 +70,10 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - WATCHPACK_INTERVAL=1000
-      - REACT_APP_BACKEND_URL=${API_URL}
+      - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
+      - REACT_APP_GOOGLE_CLIENT_ID=${REACT_APP_GOOGLE_CLIENT_ID}
     depends_on:
-      - backend
+      - server
 
 volumes:
   mongo_data:

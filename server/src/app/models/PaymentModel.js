@@ -7,7 +7,7 @@ const paymentSchema = new mongoose.Schema({
   
   // Liên kết với đơn hàng
   order_id: { type: Number, ref: "Order", required: true, index: true },
-  customer_id: { type: Number, ref: "User", required: true, index: true },
+  customer_id: { type: Number, ref: "User", required: true, },
   
   // Thông tin thanh toán
   payment_method: {
@@ -17,7 +17,7 @@ const paymentSchema = new mongoose.Schema({
   },
   
   // Thông tin VNPay
-  vnpay_transaction_id: { type: String, index: true, unique: true, sparse: true }, // Fix: thêm sparse
+  vnpay_transaction_id: { type: String, unique: true, sparse: true }, // Fix: thêm sparse
   vnpay_payment_id: { type: String, index: true },
   vnpay_order_info: String,
   vnpay_response_code: String,

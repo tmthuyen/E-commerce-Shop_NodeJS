@@ -9,12 +9,13 @@ const { PORT } = require('./constants');
 const route = require('./routes');
 const db = require('./config/database');
  
+
 const app = express();
 // setup cors
 // setup cors
 app.use(cors({ origin: true, credentials: true })); // development
 // production
-const allowOrigins = ['http://localhost:3000'];
+const allowOrigins = ['http://localhost:3000', 'http://localhost:4000', 'http://localhost:5173'];
 app.use(
     cors({
         origin: (origin, callback) => {
