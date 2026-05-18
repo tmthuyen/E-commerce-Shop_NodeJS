@@ -56,22 +56,22 @@ services:
   client:
     build: 
       context: ..
-      dockerfile: docker/Dockerfile.client
+      dockerfile: docker/Dockerfile.web
       target: dev 
-    image: ecm-nodejs-client:dev
-    container_name: ecm-nodejs-client
+    image: ecm-nodejs-web:dev
+    container_name: ecm-nodejs-web
     ports:
       - "4000:${FRONTEND_PORT}"
     volumes:
-      - ../client:/app 
+      - ../web:/app 
       - /app/node_modules 
     environment:
       - NODE_ENV=development 
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - WATCHPACK_INTERVAL=1000
-      - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
-      - REACT_APP_GOOGLE_CLIENT_ID=${REACT_APP_GOOGLE_CLIENT_ID}
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - server
 

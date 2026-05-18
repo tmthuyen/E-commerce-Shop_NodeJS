@@ -8,7 +8,9 @@ const cors = require('cors');
 const { PORT } = require('./constants'); 
 const route = require('./routes');
 const db = require('./config/database');
- 
+
+
+
 
 const app = express();
 // setup cors
@@ -73,4 +75,8 @@ initProductIndex()
 // app.listen(PORT, () =>
 //     console.log(`Example app listening on PORT http://localhost:${PORT}`)
 // );
+
+// sửa để CI chạy test
+console.log(`Server app initialized, ready for testing...`); // log này sẽ xuất hiện khi app sẵn sàng
+
 module.exports = app;

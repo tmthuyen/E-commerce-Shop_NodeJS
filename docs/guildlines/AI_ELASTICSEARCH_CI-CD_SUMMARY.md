@@ -50,14 +50,14 @@
 ### 3. CI/CD Pipeline
 
 **Files đã tạo**:
-- ✅ `.github/workflows/ci-cd.yml` - GitHub Actions workflow
+- ✅ `.github/workflows/server-ci.yml` - CI/CD cho server
+- ✅ `.github/workflows/client-ci.yml` - CI/CD cho client
 
 **Tính năng**:
 - ✅ Backend tests & build
 - ✅ Frontend tests & build
-- ✅ Docker Compose validation
-- ✅ Security scan (npm audit)
-- ✅ Auto-deploy (trên main branch)
+- ✅ Build Docker image cho server và client
+- ✅ Push image lên GitHub Container Registry khi merge vào `main`
 
 **Workflow triggers**:
 - Push to `main` hoặc `develop`

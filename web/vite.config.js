@@ -11,9 +11,15 @@ export default defineConfig({
       include: ['**/*.{js,jsx,ts,tsx}']
     })
   ], 
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.js'],
+    css: true,
+  },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),  // ← absolute path thay vì './src'
+      '@': resolve(__dirname, 'src'),
     },
   },
   server: {
