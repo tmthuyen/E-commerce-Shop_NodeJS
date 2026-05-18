@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Node.js CI
 
 on:
   push:
@@ -6,168 +6,56 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-env:
-  NODE_VERSION: '18.x'
-
 jobs:
-  backend:
-    
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Server - Node 18
+            node-version: '18.x'
+            app-dir: ./server
+            cache-dependency-path: server/package-lock.json
+            test-command: ''
+            build-command: npm run build --if-present
+          - name: Server - Node 20
+            node-version: '20.x'
+            app-dir: ./server
+            cache-dependency-path: server/package-lock.json
+            test-command: ''
+            build-command: npm run build --if-present
+          - name: Client - Node 18
+            node-version: '18.x'
+            app-dir: ./client
+            cache-dependency-path: client/package-lock.json
+            test-command: npm test -- --watchAll=false
+            build-command: npm run build
+          - name: Client - Node 20
+            node-version: '20.x'
+            app-dir: ./client
+            cache-dependency-path: client/package-lock.json
+            test-command: npm test -- --watchAll=false
+            build-command: npm run build
 
-
-  # # Backend Tests & Build
-  # backend:
-  #   name: Backend - Test & Build
-  #   runs-on: ubuntu-latest
-    
-  #   services:
-  #     mongodb:
-  #       image: mongo:6
-  #       ports:
-  #         - 27017:27017
-  #       options: >-
-  #         --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-      
-  #     elasticsearch:
-  #       image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
-  #       env:
-  #         discovery.type: single-node
-  #         xpack.security.enabled: false
-  #         ES_JAVA_OPTS: -Xms512m -Xmx512m
-  #       ports:
-  #         - 9200:9200
-  #       options: >-
-  #         --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: ${{ env.NODE_VERSION }}
-  #         cache: 'npm'
-  #         cache-dependency-path: BE/package-lock.json
-
-  #     - name: Install dependencies
-  #       working-directory: ./BE
-  #       run: npm ci
-
-  #     - name: Run linter
-  #       working-directory: ./BE
-  #       run: |
-  #         npm install -g eslint || true
-  #         eslint . --ext .js --max-warnings 0 || echo "Linter not configured"
-
-  #     - name: Run tests
-  #       working-directory: ./BE
-  #       run: npm test || echo "Tests not configured"
-  #       env:
-  #         NODE_ENV: test
-  #         MONGO_URI: mongodb://localhost:27017/test_db
-  #         ELASTIC_URL: http://localhost:9200
-
-  #     - name: Build Docker image
-  #       working-directory: ./BE
-  #       run: |
-  #         docker build -t ecommerce-backend:test -f Dockerfile .
-
-  # # Frontend Tests & Build
-  # frontend:
-  #   name: Frontend - Test & Build
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: ${{ env.NODE_VERSION }}
-  #         cache: 'npm'
-  #         cache-dependency-path: fe/package-lock.json
-
-  #     - name: Install dependencies
-  #       working-directory: ./fe
-  #       run: npm ci
-
-  #     - name: Run linter
-  #       working-directory: ./fe
-  #       run: |
-  #         npm run lint || echo "Linter not configured"
-
-  #     - name: Run tests
-  #       working-directory: ./fe
-  #       run: npm test -- --watchAll=false --coverage || echo "Tests not configured"
-
-  #     - name: Build production
-  #       working-directory: ./fe
-  #       run: npm run build
-  #       env:
-  #         REACT_APP_BACKEND_URL: ${{ secrets.REACT_APP_BACKEND_URL || 'http://localhost:8000' }}
-
-  #     - name: Build Docker image
-  #       working-directory: ./fe
-  #       run: |
-  #         docker build -t ecommerce-frontend:test -f Dockerfile .
-
-  # # Docker Compose Test
-  # docker-compose:
-  #   name: Docker Compose - Integration Test
-  #   runs-on: ubuntu-latest
-  #   needs: [backend, frontend]
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-
-  #     - name: Test docker-compose
-  #       run: |
-  #         docker-compose -f docker-compose.dev.yml config
-  #         echo "✅ Docker Compose config is valid"
-
-  # # Security Scan
-  # security:
-  #   name: Security Scan
-  #   runs-on: ubuntu-latest
-  #   needs: [backend, frontend]
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Run npm audit (Backend)
-  #       working-directory: ./BE
-  #       run: npm audit --audit-level=moderate || true
-
-  #     - name: Run npm audit (Frontend)
-  #       working-directory: ./fe
-  #       run: npm audit --audit-level=moderate || true
-
-  # # Deploy (only on main branch)
-  # deploy:
-  #   name: Deploy to Production
-  #   runs-on: ubuntu-latest
-  #   needs: [backend, frontend, docker-compose]
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Deploy to server
-  #       run: |
-  #         echo "🚀 Deployment steps would go here"
-  #         echo "Example: SSH to server, pull code, restart services"
-  #         # ssh user@server "cd /app && git pull && docker-compose up -d --build"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.cache-dependency-path }}
+      - name: Install dependencies
+        working-directory: ${{ matrix.app-dir }}
+        run: npm ci
+      - name: Run tests
+        if: ${{ matrix.test-command != '' }}
+        working-directory: ${{ matrix.app-dir }}
+        run: ${{ matrix.test-command }}
+      - name: Build app
+        working-directory: ${{ matrix.app-dir }}
+        run: ${{ matrix.build-command }}
 
