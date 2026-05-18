@@ -1,6 +1,6 @@
 import { Grid, Skeleton } from '@mui/material'; 
 
-const HomePageSkeleton = (title) => {
+const HomePageSkeleton = ({ title = '' } = {}) => {
   const renderSkeletons = (count = 6) => {
     return (
       <>

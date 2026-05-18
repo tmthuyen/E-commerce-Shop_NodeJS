@@ -1,7 +1,7 @@
 import { Grid, Skeleton } from '@mui/material'; 
 
-const HomePageSkeleton = (title) => {
-  const renderSkeletons = (count = 6) => {
+const HomePageSkeleton = ({ title = '' } = {}) => {
+  const renderSkeletons = (sectionTitle = title, count = 6) => {
     return (
       <>
         <Grid container spacing={2}>
@@ -15,7 +15,7 @@ const HomePageSkeleton = (title) => {
           >
             <Skeleton sx={{ height: '100%' }}>
               <Skeleton variant="text" width={200} height={40}>
-                {title}
+                {sectionTitle}
               </Skeleton>
               <Skeleton variant="text" width={400} height={30} />
             </Skeleton>
@@ -55,14 +55,14 @@ const HomePageSkeleton = (title) => {
           sx={{ borderRadius: 2, mb: 2 }}
         />
 
-        {renderSkeletons((title = 'New Products'))}
+        {renderSkeletons('New Products')}
 
-        {renderSkeletons((title = 'Best Sellers'))}
+        {renderSkeletons('Best Sellers')}
 
-        {renderSkeletons((title = 'Điện thoại'))}
+        {renderSkeletons('Điện thoại')}
 
-        {renderSkeletons((title = 'Desktop'))}
-        {renderSkeletons((title = 'Laptop'))}
+        {renderSkeletons('Desktop')}
+        {renderSkeletons('Laptop')}
       </Grid>
     </>
   );

@@ -67,24 +67,27 @@ const UserMenuMobile = ({ user, cartLength }) => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {/* Hiển thị tên user nếu đã login */}
-        {user && (
-          <>
-            <MenuItem disabled sx={{ opacity: 1, fontWeight: 600 }}>
+        {user && [
+          <MenuItem
+            key="user-label"
+            disabled
+            sx={{ opacity: 1, fontWeight: 600 }}
+          >
               <ListItemIcon>
                 <Person fontSize="small" />
               </ListItemIcon>
               <ListItemText>
                 {user?.username || user?.full_name || user?.email}
               </ListItemText>
-            </MenuItem>
-            <Divider />
-          </>
-        )}
+            </MenuItem>,
+          <Divider key="user-label-divider" />,
+        ]}
 
         {/* Menu items cho user đã login */}
         {user ? (
-          <>
+          [
             <MenuItem
+              key="account-profile"
               component={Link}
               to="/account/profile"
               onClick={handleClose}
@@ -93,9 +96,10 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <Person fontSize="small" />
               </ListItemIcon>
               <ListItemText>Tài khoản của tôi</ListItemText>
-            </MenuItem>
+            </MenuItem>,
 
             <MenuItem
+              key="account-orders"
               component={Link}
               to="/account/orders"
               onClick={handleClose}
@@ -104,9 +108,10 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <ListAlt fontSize="small" />
               </ListItemIcon>
               <ListItemText>Đơn hàng của tôi</ListItemText>
-            </MenuItem>
+            </MenuItem>,
 
             <MenuItem
+              key="account-carts"
               component={Link}
               to="/account/carts"
               onClick={handleClose}
@@ -117,9 +122,10 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 </Badge>
               </ListItemIcon>
               <ListItemText>Giỏ hàng của tôi</ListItemText>
-            </MenuItem>
+            </MenuItem>,
 
             <MenuItem
+              key="account-favorites"
               component={Link}
               to="/account/favorites"
               onClick={handleClose}
@@ -128,11 +134,12 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <Favorite fontSize="small" />
               </ListItemIcon>
               <ListItemText>Sản phẩm yêu thích</ListItemText>
-            </MenuItem>
+            </MenuItem>,
 
-            <Divider />
+            <Divider key="account-divider" />,
 
             <MenuItem
+              key="account-logout"
               component={Link}
               to="/logout"
               onClick={handleClose}
@@ -142,12 +149,13 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <Logout fontSize="small" color="error" />
               </ListItemIcon>
               <ListItemText>Đăng xuất</ListItemText>
-            </MenuItem>
-          </>
+            </MenuItem>,
+          ]
         ) : (
           /* Menu items cho khách chưa login */
-          <>
+          [
             <MenuItem
+              key="guest-login"
               component={Link}
               to="/login"
               onClick={handleClose}
@@ -157,9 +165,10 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <Login fontSize="small" color="primary" />
               </ListItemIcon>
               <ListItemText>Đăng nhập</ListItemText>
-            </MenuItem>
+            </MenuItem>,
 
             <MenuItem
+              key="guest-register"
               component={Link}
               to="/register"
               onClick={handleClose}
@@ -168,11 +177,12 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <Person fontSize="small" />
               </ListItemIcon>
               <ListItemText>Đăng ký tài khoản</ListItemText>
-            </MenuItem>
+            </MenuItem>,
 
-            <Divider />
+            <Divider key="guest-divider" />,
 
             <MenuItem
+              key="guest-products"
               component={Link}
               to="/products"
               onClick={handleClose}
@@ -181,8 +191,8 @@ const UserMenuMobile = ({ user, cartLength }) => {
                 <CartIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>Xem sản phẩm</ListItemText>
-            </MenuItem>
-          </>
+            </MenuItem>,
+          ]
         )}
       </Menu>
     </div>
