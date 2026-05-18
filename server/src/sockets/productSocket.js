@@ -36,6 +36,8 @@ const registerProductSocket = (io) => {
       );
     });
   });
+
+  console.log('Product socket registered');
 };
 
 module.exports = registerProductSocket;
