@@ -205,7 +205,7 @@ const getRecommendations = async () => {
 
 ### GitHub Actions Setup
 
-1. **File đã được tạo**: `.github/workflows/ci-cd.yml`
+1. **File đã được tạo**: `.github/workflows/server-ci.yml` và `.github/workflows/client-ci.yml`
 
 2. **Workflow sẽ chạy khi**:
    - Push to `main` hoặc `develop`
@@ -214,9 +214,8 @@ const getRecommendations = async () => {
 3. **Jobs bao gồm**:
    - ✅ Backend tests & build
    - ✅ Frontend tests & build
-   - ✅ Docker Compose validation
-   - ✅ Security scan (npm audit)
-   - ✅ Deploy (chỉ trên main branch)
+  - ✅ Build Docker image cho server và client
+  - ✅ Push image lên GitHub Container Registry trên nhánh `main`
 
 ### Manual Trigger
 

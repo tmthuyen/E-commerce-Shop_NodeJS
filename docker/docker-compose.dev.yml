@@ -56,14 +56,14 @@ services:
   client:
     build: 
       context: ..
-      dockerfile: docker/Dockerfile.client
+      dockerfile: docker/Dockerfile.web
       target: dev 
-    image: ecm-nodejs-client:dev
-    container_name: ecm-nodejs-client
+    image: ecm-nodejs-web:dev
+    container_name: ecm-nodejs-web
     ports:
       - "4000:${FRONTEND_PORT}"
     volumes:
-      - ../client:/app 
+      - ../web:/app 
       - /app/node_modules 
     environment:
       - NODE_ENV=development 
